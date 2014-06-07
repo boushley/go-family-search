@@ -24,7 +24,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var typeUrls []string
+	var gatheringUrls []string
+	var theUrls [][]string
 
 	firstCharacterUpper := func(name string) string {
 		return strings.ToUpper(name[:1]) + name[1:]
@@ -51,7 +52,7 @@ func main() {
 				link := c.FirstChild
 				for _, a := range link.Attr {
 					if a.Key == "href" {
-						typeUrls = append(typeUrls, a.Val)
+						gatheringUrls = append(gatheringUrls, a.Val)
 					}
 				}
 			}
@@ -63,14 +64,12 @@ func main() {
 			for _, a := range n.Attr {
 				if a.Key == "class" && a.Val == "datatypes" {
 					findTypes(n)
-					return
+					theUrls = append(theUrls, gatheringUrls)
+					gatheringUrls = nil
 				}
 			}
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if len(typeUrls) > 0 {
-				return
-			}
 			findTypesContainer(c)
 		}
 	}
@@ -86,6 +85,7 @@ func main() {
 		Name       string
 		Url        string
 		Properties []Property
+        Imports    map[string]bool
 	}
 
 	type Enum struct {
@@ -98,19 +98,10 @@ func main() {
 	var enums []Enum
 	var doingEnum bool
 
-	enumUrls := map[string]int{
-		"https://familysearch.org/developers/docs/api/fs/artifactType_json":         1,
-		"https://familysearch.org/developers/docs/api/fs/changeObjectModifier_json": 1,
-		"https://familysearch.org/developers/docs/api/fs/changeObjectType_json":     1,
-		"https://familysearch.org/developers/docs/api/fs/changeOperation_json":      1,
-		"https://familysearch.org/developers/docs/api/fs/matchStatus_json":          1,
-		"https://familysearch.org/developers/docs/api/gx/ResultConfidence_json":     1,
-	}
-	for _, typeUrl := range typeUrls {
-		_, doingEnum = enumUrls[typeUrl]
-
+	processTypeUrl := func(typeUrl string) {
 		theType := Type{
 			Url: typeUrl,
+            Imports: make(map[string]bool),
 		}
 		theEnum := Enum{
 			Url: typeUrl,
@@ -152,9 +143,25 @@ func main() {
 						if strings.TrimSpace(values[0]) == "" || strings.TrimSpace(values[1]) == "" {
 							log.Fatal("Missing key value: ", values)
 						}
+						t := values[1]
+						if t == "boolean" {
+							t = "bool"
+						} else if t == "float" {
+							t = "float32"
+						} else if t == "double" {
+							t = "float64"
+						} else if t == "anyURI" || t == "anyUri" {
+							t = "url.URL"
+                            theType.Imports["net/url"] = true
+						} else if t == "DateTime" || t == "dateTime" {
+							t = "time.Time"
+                            theType.Imports["time"] = true
+						} else if t[:1] != "[" && t != "string" && t != "int" {
+							t = firstCharacterUpper(t)
+						}
 						theType.Properties = append(theType.Properties, Property{
 							values[0],
-							values[1],
+							t,
 							values[2],
 						})
 					} else if len(values) != 0 {
@@ -168,9 +175,9 @@ func main() {
 			if n.Type == html.ElementNode && n.Data == "h1" {
 				title := gatherText(n)
 				if strings.TrimSpace(title) != "" {
-                    name := strings.TrimSpace(title[:strings.Index(title, ` `)])
+					name := strings.TrimSpace(title[:strings.Index(title, ` `)])
 					theType.Name = name
-                    theEnum.Name = firstCharacterUpper(name)
+					theEnum.Name = firstCharacterUpper(name)
 				}
 			} else if n.Type == html.ElementNode && n.Data == "table" {
 				for _, a := range n.Attr {
@@ -196,12 +203,48 @@ func main() {
 		}
 	}
 
+	enumUrls := map[string]bool{
+		"https://familysearch.org/developers/docs/api/fs/artifactType_json":         true,
+		"https://familysearch.org/developers/docs/api/fs/changeObjectModifier_json": true,
+		"https://familysearch.org/developers/docs/api/fs/changeObjectType_json":     true,
+		"https://familysearch.org/developers/docs/api/fs/changeOperation_json":      true,
+		"https://familysearch.org/developers/docs/api/fs/matchStatus_json":          true,
+	}
+	for _, typeUrl := range theUrls[0] {
+		if typeUrl == "https://familysearch.org/developers/docs/api/gx/ResultConfidence_json" {
+			continue
+		}
+		_, doingEnum = enumUrls[typeUrl]
+		processTypeUrl(typeUrl)
+	}
+
+	doingEnum = true
+	for _, typeUrl := range theUrls[1] {
+		processTypeUrl(typeUrl)
+	}
+
 	fmt.Println("Outputting types")
 
 	for _, t := range types {
 
 		typeFile := `
         package models
+        `
+
+        if len(t.Imports) > 0 {
+            typeFile += `import (
+                `
+
+            for key, _ := range t.Imports {
+                typeFile += `"` + key + "\"\n"
+            }
+                
+            typeFile += `
+            )
+            `
+        }
+
+        typeFile += `
 
         // DataType can be found at: ` + t.Url + `
 
@@ -238,6 +281,8 @@ func main() {
 
 	for _, t := range enums {
 
+		fmt.Println("Creating enum: ", t.Name)
+
 		typeFile := `
         package models
 
@@ -250,7 +295,7 @@ func main() {
         `
 
 		for _, value := range t.Values {
-            typeFile += value[strings.LastIndex(value, `/`):] + ` // ` + value + "\n"
+			typeFile += t.Name + `_` + value[strings.LastIndex(value, `/`)+1:] + ` // ` + value + "\n"
 		}
 		typeFile += ` ) `
 

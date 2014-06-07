@@ -1,0 +1,52 @@
+package models
+
+type ChangeObjectType int
+
+const (
+	_ ChangeObjectType = iota
+	ChangeObjectType_Person
+	ChangeObjectType_Couple
+	ChangeObjectType_ChildAndParentsRelationship
+	ChangeObjectType_Man
+	ChangeObjectType_Woman
+	ChangeObjectType_Father
+	ChangeObjectType_Mother
+	ChangeObjectType_Child
+	ChangeObjectType_SourceReference
+	ChangeObjectType_DiscussionReference
+	ChangeObjectType_EvidenceReference
+	ChangeObjectType_Affiliation
+	ChangeObjectType_BarMitzvah
+	ChangeObjectType_BatMitzvah
+	ChangeObjectType_Birth
+	ChangeObjectType_Burial
+	ChangeObjectType_Christening
+	ChangeObjectType_Cremation
+	ChangeObjectType_Death
+	ChangeObjectType_MilitaryService
+	ChangeObjectType_Naturalization
+	ChangeObjectType_Occupation
+	ChangeObjectType_Religion
+	ChangeObjectType_Residence
+	ChangeObjectType_Stillbirth
+	ChangeObjectType_Fact
+	ChangeObjectType_Caste
+	ChangeObjectType_Clan
+	ChangeObjectType_NationalId
+	ChangeObjectType_Nationality
+	ChangeObjectType_PhysicalDescription
+	ChangeObjectType_Ethnicity
+	ChangeObjectType_Gender
+	ChangeObjectType_Note
+	ChangeObjectType_Name
+	ChangeObjectType_BirthName
+	ChangeObjectType_AlsoKnownAs
+	ChangeObjectType_MarriedName
+	ChangeObjectType_Nickname
+	ChangeObjectType_DiedBeforeEight
+	ChangeObjectType_TribeName
+	ChangeObjectType_BirthOrder
+	ChangeObjectType_LifeSketch
+	ChangeObjectType_TitleOfNobility
+	ChangeObjectType_NotAMatch
+)
