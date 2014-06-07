@@ -2,13 +2,14 @@ package main
 
 // http://play.golang.org/p/7ubbUA1T3R
 import (
-	//"go/parser"
-	//"go/printer"
-	//"go/token"
 	"code.google.com/p/go.net/html"
 	"fmt"
+	"go/parser"
+	"go/printer"
+	"go/token"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -24,6 +25,10 @@ func main() {
 	}
 
 	var typeUrls []string
+
+	firstCharacterUpper := func(name string) string {
+		return strings.ToUpper(name[:1]) + name[1:]
+	}
 
 	var gatherText func(n *html.Node) string
 	gatherText = func(n *html.Node) (result string) {
@@ -77,7 +82,23 @@ func main() {
 		Description string
 	}
 
-	skipUrls := map[string]int{
+	type Type struct {
+		Name       string
+		Url        string
+		Properties []Property
+	}
+
+	type Enum struct {
+		Name   string
+		Url    string
+		Values []string
+	}
+
+	var types []Type
+	var enums []Enum
+	var doingEnum bool
+
+	enumUrls := map[string]int{
 		"https://familysearch.org/developers/docs/api/fs/artifactType_json":         1,
 		"https://familysearch.org/developers/docs/api/fs/changeObjectModifier_json": 1,
 		"https://familysearch.org/developers/docs/api/fs/changeObjectType_json":     1,
@@ -86,9 +107,13 @@ func main() {
 		"https://familysearch.org/developers/docs/api/gx/ResultConfidence_json":     1,
 	}
 	for _, typeUrl := range typeUrls {
-		if _, ok := skipUrls[typeUrl]; ok {
-			fmt.Println("Skipping format info for: ", typeUrl)
-			continue
+		_, doingEnum = enumUrls[typeUrl]
+
+		theType := Type{
+			Url: typeUrl,
+		}
+		theEnum := Enum{
+			Url: typeUrl,
 		}
 
 		fmt.Println("Parsing format info for: ", typeUrl)
@@ -103,7 +128,6 @@ func main() {
 			log.Fatal(err)
 		}
 
-		var props []Property
 		var values []string
 
 		var findProperties func(n *html.Node)
@@ -122,11 +146,13 @@ func main() {
 						}
 					}
 
-					if len(values) == 4 {
+					if doingEnum {
+						theEnum.Values = append(theEnum.Values, strings.TrimSpace(values[0]))
+					} else if len(values) == 4 {
 						if strings.TrimSpace(values[0]) == "" || strings.TrimSpace(values[1]) == "" {
 							log.Fatal("Missing key value: ", values)
 						}
-						props = append(props, Property{
+						theType.Properties = append(theType.Properties, Property{
 							values[0],
 							values[1],
 							values[2],
@@ -139,7 +165,14 @@ func main() {
 		}
 		var findPropertiesTable func(n *html.Node)
 		findPropertiesTable = func(n *html.Node) {
-			if n.Type == html.ElementNode && n.Data == "table" {
+			if n.Type == html.ElementNode && n.Data == "h1" {
+				title := gatherText(n)
+				if strings.TrimSpace(title) != "" {
+                    name := strings.TrimSpace(title[:strings.Index(title, ` `)])
+					theType.Name = name
+                    theEnum.Name = firstCharacterUpper(name)
+				}
+			} else if n.Type == html.ElementNode && n.Data == "table" {
 				for _, a := range n.Attr {
 					if a.Key == "class" && a.Val == "table table-striped" {
 						for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -156,7 +189,85 @@ func main() {
 		}
 		findPropertiesTable(doc)
 
-		fmt.Println(props)
+		if doingEnum {
+			enums = append(enums, theEnum)
+		} else {
+			types = append(types, theType)
+		}
+	}
+
+	fmt.Println("Outputting types")
+
+	for _, t := range types {
+
+		typeFile := `
+        package models
+
+        // DataType can be found at: ` + t.Url + `
+
+        type ` + t.Name + ` struct {
+        `
+
+		for _, p := range t.Properties {
+			propType := p.Type
+			if propType != "string" {
+				propType = firstCharacterUpper(propType)
+			}
+
+			typeFile += firstCharacterUpper(p.Name) + ` ` + p.Type + " `json:\"" + p.Name + "\"`\n"
+		}
+		typeFile += ` } `
+
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, "", typeFile, 0)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		outfile, err := os.Create("../models/" + t.Name + ".go")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("Writing out file: ", outfile.Name())
+
+		printer.Fprint(outfile, fset, f)
+	}
+
+	fmt.Println("Outputting enums")
+
+	for _, t := range enums {
+
+		typeFile := `
+        package models
+
+        // DataType can be found at: ` + t.Url + `
+
+        type ` + t.Name + ` int
+
+        const (
+            _ ` + t.Name + ` = iota
+        `
+
+		for _, value := range t.Values {
+            typeFile += value[strings.LastIndex(value, `/`):] + ` // ` + value + "\n"
+		}
+		typeFile += ` ) `
+
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, "", typeFile, 0)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		outfile, err := os.Create("../models/" + t.Name + ".go")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("Writing out file: ", outfile.Name())
+
+		printer.Fprint(outfile, fset, f)
 	}
 
 }
