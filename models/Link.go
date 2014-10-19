@@ -1,12 +1,15 @@
 package models
 
 type Link struct {
-	Hreflang string `json:"hreflang"`
 	Template string `json:"template"`
-	Title    string `json:"title"`
 	Allow    string `json:"allow"`
+	Count    int    `json:"count"`
 	Accept   string `json:"accept"`
-	Rel      string `json:"rel"`
 	Type     string `json:"type"`
+	Hreflang string `json:"hreflang"`
+	Title    string `json:"title"`
+	Results  int    `json:"results"`
+	Rel      string `json:"rel"`
+	Offset   int    `json:"offset"`
 	Href     string `json:"href"`
 }

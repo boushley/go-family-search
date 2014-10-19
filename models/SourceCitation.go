@@ -5,6 +5,6 @@ type SourceCitation struct {
 	CitationTemplate ResourceReference `json:"citationTemplate"`
 	Fields           []CitationField   `json:"fields"`
 	Value            string            `json:"value"`
-	Links            []Link            `json:"links"`
-	Id               ID                `json:"id"`
+	Links            map[string]Link   `json:"links"`
+	Id               string            `json:"id"`
 }

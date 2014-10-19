@@ -5,5 +5,5 @@ type NameForm struct {
 	FullText string     `json:"fullText"`
 	Parts    []NamePart `json:"parts"`
 	Fields   []Field    `json:"fields"`
-	Id       ID         `json:"id"`
+	Id       string     `json:"id"`
 }

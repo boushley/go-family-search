@@ -15,6 +15,12 @@ import (
 )
 
 func main() {
+	printerConfig := &printer.Config{
+		printer.TabIndent & printer.UseSpaces,
+		4,
+		0,
+	}
+
 	resp, err := http.Get("https://familysearch.org/developers/docs/api/fs_json")
 	if err != nil {
 		log.Fatal(err)
@@ -132,7 +138,7 @@ func main() {
 						if cell.Type == html.ElementNode && cell.Data == "td" {
 							value := strings.TrimSpace(gatherText(cell))
 							if strings.HasPrefix(value, "array of") {
-								if value.Contains("Link") {
+								if strings.Contains(value, "Link") || strings.Contains(value, "Identifier") {
 									value = "map[string]" + strings.TrimSpace(value[8:])
 								} else {
 									value = "[]" + strings.TrimSpace(value[8:])
@@ -157,11 +163,10 @@ func main() {
 							t = "float64"
 						} else if t == "anyURI" || t == "anyUri" {
 							t = "string"
-							theType.Imports["net/url"] = true
 						} else if t == "DateTime" || t == "dateTime" {
 							t = "time.Time"
 							theType.Imports["time"] = true
-						} else if t[:1] != "[" && t != "string" && t != "int" {
+						} else if t[:1] != "[" && t != "string" && t != "int" && !strings.HasPrefix(t, "map[string]") {
 							t = firstCharacterUpper(t)
 						}
 						theType.Properties = append(theType.Properties, Property{
@@ -231,6 +236,7 @@ func main() {
 	fmt.Println("Outputting types")
 
 	for _, t := range types {
+		log.Print("Starting on type: " + t.Name)
 
 		typeFile := `
         package models
@@ -317,7 +323,7 @@ func main() {
 
 		fmt.Println("Writing out file: ", outfile.Name())
 
-		printer.Fprint(outfile, fset, f)
+		printerConfig.Fprint(outfile, fset, f)
 	}
 
 }

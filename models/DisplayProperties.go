@@ -12,5 +12,5 @@ type DisplayProperties struct {
 	MarriageDate      string `json:"marriageDate"`
 	MarriagePlace     string `json:"marriagePlace"`
 	Name              string `json:"name"`
-	Id                ID     `json:"id"`
+	Id                string `json:"id"`
 }

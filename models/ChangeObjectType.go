@@ -16,13 +16,17 @@ const (
 	ChangeObjectType_DiscussionReference
 	ChangeObjectType_EvidenceReference
 	ChangeObjectType_Affiliation
+	ChangeObjectType_Annulment
 	ChangeObjectType_BarMitzvah
 	ChangeObjectType_BatMitzvah
 	ChangeObjectType_Birth
 	ChangeObjectType_Burial
 	ChangeObjectType_Christening
 	ChangeObjectType_Cremation
+	ChangeObjectType_CommonLawMarriage
 	ChangeObjectType_Death
+	ChangeObjectType_Divorce
+	ChangeObjectType_Marriage
 	ChangeObjectType_MilitaryService
 	ChangeObjectType_Naturalization
 	ChangeObjectType_Occupation
@@ -47,6 +51,7 @@ const (
 	ChangeObjectType_TribeName
 	ChangeObjectType_BirthOrder
 	ChangeObjectType_LifeSketch
+	ChangeObjectType_LivingStatus
 	ChangeObjectType_TitleOfNobility
 	ChangeObjectType_NotAMatch
 )

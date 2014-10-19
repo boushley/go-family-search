@@ -12,6 +12,6 @@ type Discussion struct {
 	Modified         time.Time         `json:"modified"`
 	NumberOfComments int               `json:"numberOfComments"`
 	Comments         []Comment         `json:"comments"`
-	Links            []Link            `json:"links"`
-	Id               ID                `json:"id"`
+	Links            map[string]Link   `json:"links"`
+	Id               string            `json:"id"`
 }

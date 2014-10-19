@@ -3,6 +3,6 @@ package models
 type RecordDescriptor struct {
 	Lang   string            `json:"lang"`
 	Fields []FieldDescriptor `json:"fields"`
-	Links  []Link            `json:"links"`
-	Id     ID                `json:"id"`
+	Links  map[string]Link   `json:"links"`
+	Id     string            `json:"id"`
 }

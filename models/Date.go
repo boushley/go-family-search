@@ -5,5 +5,5 @@ type Date struct {
 	Formal     string      `json:"formal"`
 	Normalized []TextValue `json:"normalized"`
 	Fields     []Field     `json:"fields"`
-	Id         ID          `json:"id"`
+	Id         string      `json:"id"`
 }

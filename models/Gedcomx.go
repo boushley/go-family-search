@@ -15,6 +15,6 @@ type Gedcomx struct {
 	Collections        []Collection        `json:"collections"`
 	Fields             []Field             `json:"fields"`
 	RecordDescriptors  []RecordDescriptor  `json:"recordDescriptors"`
-	Links              []Link              `json:"links"`
-	Id                 ID                  `json:"id"`
+	Links              map[string]Link     `json:"links"`
+	Id                 string              `json:"id"`
 }

@@ -5,5 +5,5 @@ type NamePart struct {
 	Type       NamePartType `json:"type"`
 	Fields     []Field      `json:"fields"`
 	Qualifiers []Qualifier  `json:"qualifiers"`
-	Id         ID           `json:"id"`
+	Id         string       `json:"id"`
 }

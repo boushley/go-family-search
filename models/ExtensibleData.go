@@ -1,5 +1,5 @@
 package models
 
 type ExtensibleData struct {
-	Id ID `json:"id"`
+	Id string `json:"id"`
 }

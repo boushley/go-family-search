@@ -5,5 +5,5 @@ type PlaceReference struct {
 	Original    string      `json:"original"`
 	Normalized  []TextValue `json:"normalized"`
 	Fields      []Field     `json:"fields"`
-	Id          ID          `json:"id"`
+	Id          string      `json:"id"`
 }

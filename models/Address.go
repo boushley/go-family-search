@@ -12,5 +12,5 @@ type Address struct {
 	Street5         string `json:"street5"`
 	Street6         string `json:"street6"`
 	Value           string `json:"value"`
-	Id              ID     `json:"id"`
+	Id              string `json:"id"`
 }

@@ -2,8 +2,8 @@ package models
 
 type FieldDescriptor struct {
 	OriginalLabel string                 `json:"originalLabel"`
-	Description   []TextValue            `json:"description"`
+	Descriptions  []TextValue            `json:"descriptions"`
 	Values        []FieldValueDescriptor `json:"values"`
-	Links         []Link                 `json:"links"`
-	Id            ID                     `json:"id"`
+	Links         map[string]Link        `json:"links"`
+	Id            string                 `json:"id"`
 }

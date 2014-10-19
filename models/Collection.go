@@ -7,5 +7,5 @@ type Collection struct {
 	Content     []CollectionContent `json:"content"`
 	Attribution Attribution         `json:"attribution"`
 	Links       map[string]Link     `json:"links"`
-	Id          ID                  `json:"id"`
+	Id          string              `json:"id"`
 }
