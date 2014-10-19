@@ -13,18 +13,26 @@ import (
 type Client struct {
 	root Endpoint
 	http *http.Client
+
+	tokenEndpoint     string
+	authorizeEndpoint string
 }
 
 func NewClient(root Endpoint) Client {
-	httpClient := &http.Client{}
-	c := Client{root, httpClient}
+	c := Client{}
+	c.root = root
+	c.http = &http.Client{}
 	return c
 }
 
 func (c Client) Initialize() error {
 	tree := c.getRootTree()
-	treeBytes, _ := json.Marshal(tree)
-	log.Print(string(treeBytes))
+
+	c.tokenEndpoint = tree.Collections[0].Links["http://oauth.net/core/2.0/endpoint/token"].Href
+	c.authorizeEndpoint = tree.Collections[0].Links["http://oauth.net/core/2.0/endpoint/authorize"].Href
+
+	log.Println(c.tokenEndpoint)
+	log.Println(c.authorizeEndpoint)
 
 	return nil
 }
@@ -34,7 +42,6 @@ func (c Client) getRootTree() (tree *models.FamilySearch) {
 
 	tree = &models.FamilySearch{}
 	bodyBytes, err := ioutil.ReadAll(res.Body)
-	log.Print(string(bodyBytes))
 	handleError(err)
 
 	err = json.Unmarshal(bodyBytes, tree)
