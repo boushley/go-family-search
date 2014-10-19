@@ -2,7 +2,6 @@ package main
 
 // http://play.golang.org/p/7ubbUA1T3R
 import (
-	"code.google.com/p/go.net/html"
 	"fmt"
 	"go/parser"
 	"go/printer"
@@ -11,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"code.google.com/p/go.net/html"
 )
 
 func main() {
@@ -85,7 +86,7 @@ func main() {
 		Name       string
 		Url        string
 		Properties []Property
-        Imports    map[string]bool
+		Imports    map[string]bool
 	}
 
 	type Enum struct {
@@ -100,8 +101,8 @@ func main() {
 
 	processTypeUrl := func(typeUrl string) {
 		theType := Type{
-			Url: typeUrl,
-            Imports: make(map[string]bool),
+			Url:     typeUrl,
+			Imports: make(map[string]bool),
 		}
 		theEnum := Enum{
 			Url: typeUrl,
@@ -131,7 +132,11 @@ func main() {
 						if cell.Type == html.ElementNode && cell.Data == "td" {
 							value := strings.TrimSpace(gatherText(cell))
 							if strings.HasPrefix(value, "array of") {
-								value = "[]" + strings.TrimSpace(value[8:])
+								if value.Contains("Link") {
+									value = "map[string]" + strings.TrimSpace(value[8:])
+								} else {
+									value = "[]" + strings.TrimSpace(value[8:])
+								}
 							}
 							values = append(values, value)
 						}
@@ -151,11 +156,11 @@ func main() {
 						} else if t == "double" {
 							t = "float64"
 						} else if t == "anyURI" || t == "anyUri" {
-							t = "url.URL"
-                            theType.Imports["net/url"] = true
+							t = "string"
+							theType.Imports["net/url"] = true
 						} else if t == "DateTime" || t == "dateTime" {
 							t = "time.Time"
-                            theType.Imports["time"] = true
+							theType.Imports["time"] = true
 						} else if t[:1] != "[" && t != "string" && t != "int" {
 							t = firstCharacterUpper(t)
 						}
@@ -231,20 +236,20 @@ func main() {
         package models
         `
 
-        if len(t.Imports) > 0 {
-            typeFile += `import (
+		if len(t.Imports) > 0 {
+			typeFile += `import (
                 `
 
-            for key, _ := range t.Imports {
-                typeFile += `"` + key + "\"\n"
-            }
-                
-            typeFile += `
+			for key, _ := range t.Imports {
+				typeFile += `"` + key + "\"\n"
+			}
+
+			typeFile += `
             )
             `
-        }
+		}
 
-        typeFile += `
+		typeFile += `
 
         // DataType can be found at: ` + t.Url + `
 

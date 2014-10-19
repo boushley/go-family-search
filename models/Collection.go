@@ -6,6 +6,6 @@ type Collection struct {
 	Size        int                 `json:"size"`
 	Content     []CollectionContent `json:"content"`
 	Attribution Attribution         `json:"attribution"`
-	Links       []Link              `json:"links"`
+	Links       map[string]Link     `json:"links"`
 	Id          ID                  `json:"id"`
 }

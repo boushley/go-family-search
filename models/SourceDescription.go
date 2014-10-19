@@ -1,12 +1,9 @@
 package models
 
-import (
-	"net/url"
-	"time"
-)
+import "time"
 
 type SourceDescription struct {
-	About        url.URL           `json:"about"`
+	About        string            `json:"about"`
 	MediaType    string            `json:"mediaType"`
 	ResourceType ResourceType      `json:"resourceType"`
 	Citations    []SourceCitation  `json:"citations"`
