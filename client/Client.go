@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -42,6 +43,31 @@ func (c *Client) GetAuthorizationEndpoint(landingUrl string) string {
 
 func (c *Client) GetTokenEndpoint() string {
 	return c.tree.Collections[0].Links["http://oauth.net/core/2.0/endpoint/token"].Href
+}
+
+func (c *Client) GetTokenFromCode(code string) (token string) {
+	tokenUrl, err := url.Parse(c.GetTokenEndpoint())
+	handleError(err)
+	query := tokenUrl.Query()
+	query.Add("grant_type", "authorization_code")
+	query.Add("code", code)
+	query.Add("client_id", c.config.ClientId)
+	tokenUrl.RawQuery = query.Encode()
+
+	res := c.makeRequest("POST", tokenUrl.String(), nil)
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	handleError(err)
+	fmt.Println("Response Received: " + string(bodyBytes))
+
+	oauth := &models.OAuthTokenResponse{}
+	err = json.Unmarshal(bodyBytes, oauth)
+	handleError(err)
+
+	if oauth.Error != "" {
+		fmt.Println("Error getting access token: " + oauth.Error + " Description: " + oauth.ErrorDescription)
+	}
+
+	return oauth.AccessToken
 }
 
 func (c *Client) getRootTree() {
